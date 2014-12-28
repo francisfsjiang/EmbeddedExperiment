@@ -1,12 +1,14 @@
-#include<stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
-#include<sys/socket.h>
-#include<sys/un.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
 
 //#pargma pack(1)
-#define SOCKET_FILE_PATH "/tmp/ipc_test.sock"
+const char* SOCKET_FILE_PATH = "/tmp/ipc_test.sock";
 
 static char data_buffer[256] = {1, 1, 2, 3, 5, 8, 13, 21};
 
