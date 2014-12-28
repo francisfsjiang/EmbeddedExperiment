@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/shm.h>
 
-const char* SHM_FILE_PATH = "/tmp/ipc_test.shm";
+const char* SHM_FILE_PATH = "/tmp/ipc_exp.shm";
 
 struct people
 {

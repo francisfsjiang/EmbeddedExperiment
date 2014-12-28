@@ -9,7 +9,7 @@
 
 
 //#pargma pack(1)
-const char* SOCKET_FILE_PATH = "/tmp/ipc_test.sock";
+const char* SOCKET_FILE_PATH = "/tmp/ipc_exp.sock";
 
 static char data_buffer[256] = {0, 1, 2, 3, 4, 5, 6, 7};
 

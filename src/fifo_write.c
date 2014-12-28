@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-const char* FIFO_FILE_PATH = "/tmp/ipc_test.fifo";
+const char* FIFO_FILE_PATH = "/tmp/ipc_exp.fifo";
 
 int main(int argc, char* argv[])
 {

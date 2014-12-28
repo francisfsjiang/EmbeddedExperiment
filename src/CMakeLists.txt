@@ -8,3 +8,6 @@ add_executable(pipe_test pipe_test.c)
 
 add_executable(sysv_write sysv_write.c)
 add_executable(sysv_read sysv_read.c)
+
+add_executable(mmap_read mmap_read.c)
+add_executable(mmap_write mmap_write.c)

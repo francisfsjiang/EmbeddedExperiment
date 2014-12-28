@@ -7,7 +7,7 @@
 #include <sys/shm.h>
 
 
-const char* SHM_FILE_PATH = "/tmp/ipc_test.shm";
+const char* SHM_FILE_PATH = "/tmp/ipc_exp.shm";
 
 struct people
 {
@@ -44,7 +44,6 @@ int main()
     for (i = 0; i < 10; ++i)
     {
         temp[0] += 1;
-        //memcpy((*(p_map+i)).name, &temp, 2);
         strcpy((*(p_map+i)).name, temp);
         (*(p_map+i)).age = i + 20;
     }
