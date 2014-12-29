@@ -48,7 +48,6 @@ int main()
     memcpy(p_map, p.name, sizeof(p.name));
     memcpy(p_map+offset, &(p.id), sizeof(p.id));
 
-
 //    people d;
 //    memcpy(d.name, p_map, sizeof(d.name));
 //    memcpy(&(d.id), p_map+offset, sizeof(d.id));
