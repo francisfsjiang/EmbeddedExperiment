@@ -75,7 +75,7 @@ static int __init globalvar_init(void)
     else
     {
         printk("globalvar kmalloc succeed.\n");
-        my_dev->global_var = 0;
+        my_dev->global_var = test_var;
 	//  Initializes cdev, remembering fops, making it ready to add to the system with cdev_add. 
         cdev_init(&my_dev->cdev, &globalvar_fops);
         my_dev->cdev.owner = THIS_MODULE;

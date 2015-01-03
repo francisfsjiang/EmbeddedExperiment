@@ -13,7 +13,7 @@ cmake_install.cmake
 *.symvers
 *.mod.c
 *.out
-
+*.tmp
 # Object files
 *.o
 *.ko

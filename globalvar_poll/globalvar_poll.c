@@ -19,7 +19,7 @@ int globalvar_release(struct inode* inode, struct file* filp);
 ssize_t globalvar_read(struct file *filp, char __user * buf, size_t len, loff_t *off);
 ssize_t globalvar_write(struct file *filp, const char __user* buf, size_t len, loff_t *off);
 long globalvar_ioctl(struct file *filp, unsigned int cmd, unsigned long args);
-unsigned poll(struct file *filp, struct poll_table_struct *poll_table);
+unsigned globalvar_poll(struct file *filp, struct poll_table_struct *poll_table);
 
 struct file_operations globalvar_fops =
 {
@@ -29,6 +29,7 @@ owner: THIS_MODULE,
        read: globalvar_read,
        write: globalvar_write,
        unlocked_ioctl: globalvar_ioctl,
+       poll: globalvar_poll,
 };
 
 int dev_major = 50;
@@ -47,6 +48,8 @@ static int test_var = 0xFF;
 module_param(test_var, int, 0644);
 
 
+char DEVICE_NAME[16] = "globalvar_poll0";
+
 
 static int __init globalvar_init(void)
 {
@@ -60,13 +63,13 @@ static int __init globalvar_init(void)
 	 * @name the name of the associated device or driver 
 	 * int alloc_chrdev_region(dev_t *dev, unsigned baseminor, unisgned count,const char *name);
 	 **/
-	char DEVICE_NAME[16] = "globalvar_poll0";
 	DEVICE_NAME[14] = 48 + DEVICE_NUM;
-	printk("device num %d\n",DEVICE_NAME[14]);
+
 	printk("device name %s\n",DEVICE_NAME);
 
 	ret = alloc_chrdev_region(&devno, dev_minor, 1, DEVICE_NAME);
 	dev_major = MAJOR(devno);
+	printk("device num %d\n",dev_major);
 
 	if (ret < 0)
 	{
@@ -76,7 +79,7 @@ static int __init globalvar_init(void)
 	}
 	else
 	{
-		printk("galbalvar init succeed.\n");
+		printk("%s\ngalbalvar init succeed.\n",DEVICE_NAME);
 	}
 
 	my_dev = kmalloc(sizeof(struct globalvar_dev), GFP_KERNEL);
@@ -97,9 +100,10 @@ static int __init globalvar_init(void)
 		{
 			printk("add dev failed.\n");
 		}
-		printk("globalvar cdev_add succeed.\n");
+		printk("%s\nglobalvar cdev_add succeed.\n",DEVICE_NAME);
 	}
-	printk("test_var = 0x%x.\n", test_var);
+	init_waitqueue_head(&my_dev->read_queue);
+	printk("%s\ntest_var = 0x%x.\n", DEVICE_NAME,test_var);
 	return ret;
 }
 
@@ -109,14 +113,14 @@ static void __exit globalvar_exit(void)
 	cdev_del(&my_dev->cdev);
 	kfree(my_dev);
 	unregister_chrdev_region(devno, 1);
-	printk("globalvar_exit called.\n");
+	printk("%s\nglobalvar_exit called.\n", DEVICE_NAME);
 	return ;
 }
 
 int globalvar_open(struct inode *inode, struct file *filp)
 {
 	struct globalvar_dev *dev;
-	printk("globalvar open called.\n");
+	printk("%s\nglobalvar open called.\n",DEVICE_NAME);
 	dev = container_of(inode->i_cdev, struct globalvar_dev, cdev);
 	filp->private_data = dev;
 	return 0;
@@ -124,7 +128,7 @@ int globalvar_open(struct inode *inode, struct file *filp)
 
 int globalvar_release(struct inode *inode, struct file *filp)
 {
-	printk("globalvar release called.\n");
+	printk("%s\nglobalvar release called.\n", DEVICE_NAME);
 	return 0;
 }
 
@@ -138,7 +142,7 @@ ssize_t globalvar_read(struct file *filp, char __user* buf, size_t len, loff_t *
 		return -EFAULT;
 	}
 	dev->read_able = 0;
-	printk("globalvar read called, global_var = 0x%x.\n",dev->global_var);
+	printk("%s\nglobalvar read called, global_var = 0x%x.\n",DEVICE_NAME,dev->global_var);
 	return sizeof(int);
 }
 
@@ -153,26 +157,27 @@ ssize_t globalvar_write(struct file *filp, const char __user* buf, size_t len, l
 	}
 	dev->read_able = 1;
 	wake_up(&dev->read_queue);
-	printk("globalvar write called. \n");
+	printk("%s\nglobalvar write called. global_var = 0x%x.\n", DEVICE_NAME,dev->global_var);
 	return sizeof(int);
 }
 
 long globalvar_ioctl(struct file *filp, unsigned int cmd, unsigned long args)
 {
-	printk("cmd = 0x%x\n", cmd);
+	printk("%s\ncmd = 0x%x\n", DEVICE_NAME, cmd);
 	return 0;
 }
 
-unsigned poll(struct file *filp, struct poll_table_struct *poll_table)
+unsigned globalvar_poll(struct file *filp, struct poll_table_struct *poll_table)
 {
 	struct globalvar_dev *dev = filp->private_data;
 	unsigned int mask = 0;
-	poll_wait(filp, &my_dev->read_queue, poll_table);
-	if (dev->read_able)
+
+	poll_wait(filp, &dev->read_queue, poll_table);
+	if (dev->read_able == 1)
 	{
 		mask |= POLLIN;
 	}
-
+	printk("%s\npoll mask 0x%x\n", DEVICE_NAME, mask);
 	return mask;
 }
 
