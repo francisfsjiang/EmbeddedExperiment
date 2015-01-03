@@ -41,6 +41,8 @@ struct globalvar_dev
 
 struct globalvar_dev *my_dev;
 
+
+
 static int test_var = 0xFF;
 module_param(test_var, int, 0644);
 
@@ -50,6 +52,15 @@ static int __init globalvar_init(void)
 {
     int ret,err;
     dev_t devno = MKDEV(dev_major, dev_minor);
+
+    /**
+    * @dev output parameter for first assigned number 
+    * @baseminor first of the requested range of minor numbers 
+    * @count the number of minor numbers required 
+    * @name the name of the associated device or driver 
+    * int alloc_chrdev_region(dev_t *dev, unsigned baseminor, unisgned count,const char *name);
+    **/
+
     ret = alloc_chrdev_region(&devno, dev_minor, 1, "globalvar");
     dev_major = MAJOR(devno);
 
@@ -73,7 +84,8 @@ static int __init globalvar_init(void)
     {
         printk("globalvar kmalloc succeed.\n");
         my_dev->global_var = 0;
-        cedv_init(&my_dev->cdev, &globalvar_fops);
+	//  Initializes cdev, remembering fops, making it ready to add to the system with cdev_add. 
+        cdev_init(&my_dev->cdev, &globalvar_fops);
         my_dev->cdev.owner = THIS_MODULE;
         err = cdev_add(&my_dev->cdev, devno, 1);
         if (err < 0)
