@@ -7,18 +7,15 @@
 #include <asm/uaccess.h>
 #include <linux/moduleparam.h>
 
-
 MODULE_LICENSE("GPL");
-
-
 
 static int __init globalvar_init(void);
 static void __exit globalvar_exit(void);
-int globalvar_open(struct inode *inode, struct file *filp);
-int globalvar_release(struct inode *inode, struct file *filp);
-int globalvar_read(struct file *filp, char *buf, size_t len, loff_t *off);
-int globalvar_write(struct file *filp, char *buf, size_t len, loff_t *off);
-int globalvar_ioctl(struct file *filp, unsigned int cmd, unsigned long args);
+int globalvar_open(struct inode* inode, struct file* filp);
+int globalvar_release(struct inode* inode, struct file* filp);
+ssize_t globalvar_read(struct file *filp, char __user * buf, size_t len, loff_t *off);
+ssize_t globalvar_write(struct file *filp, const char __user* buf, size_t len, loff_t *off);
+long globalvar_ioctl(struct file *filp, unsigned int cmd, unsigned long args);
 
 struct file_operations globalvar_fops =
         {
@@ -37,16 +34,11 @@ struct globalvar_dev
 {
     int global_var;
     struct cdev cdev;
-};
-
-struct globalvar_dev *my_dev;
-
+}*my_dev;
 
 
 static int test_var = 0xFF;
 module_param(test_var, int, 0644);
-
-
 
 static int __init globalvar_init(void)
 {
@@ -67,7 +59,7 @@ static int __init globalvar_init(void)
     if (ret < 0)
     {
         printk("register failed.\n");
-        globalvar_exit();
+        //globalvar_exit();
         return ret;
     }
     else
@@ -110,8 +102,8 @@ static void __exit globalvar_exit(void)
 
 int globalvar_open(struct inode *inode, struct file *filp)
 {
-    printk("globalvar open called.\n");
     struct globalvar_dev *dev;
+    printk("globalvar open called.\n");
     dev = container_of(inode->i_cdev, struct globalvar_dev, cdev);
     filp->private_data = dev;
     return 0;
@@ -123,7 +115,7 @@ int globalvar_release(struct inode *inode, struct file *filp)
     return 0;
 }
 
-int globalvar_read(struct file *filp, char *buf, size_t len, loff_t *off)
+ssize_t globalvar_read(struct file *filp, char __user* buf, size_t len, loff_t *off)
 {
     struct globalvar_dev *dev = filp->private_data;
     int ret;
@@ -136,7 +128,7 @@ int globalvar_read(struct file *filp, char *buf, size_t len, loff_t *off)
     return sizeof(int);
 }
 
-int globalvar_write(struct file *filp, char *buf, size_t len, loff_t *off)
+ssize_t globalvar_write(struct file *filp, const char __user* buf, size_t len, loff_t *off)
 {
     struct globalvar_dev *dev = filp->private_data;
     int ret;
@@ -149,7 +141,7 @@ int globalvar_write(struct file *filp, char *buf, size_t len, loff_t *off)
     return sizeof(int);
 }
 
-int globalvar_ioctl(struct file *filp, unsigned int cmd, unsigned long args)
+long globalvar_ioctl(struct file *filp, unsigned int cmd, unsigned long args)
 {
     printk("cmd = 0x%x", cmd);
     return 0;
