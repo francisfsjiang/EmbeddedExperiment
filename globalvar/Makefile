@@ -1,4 +1,4 @@
-obj-m=cdev_driver.o
+obj-m := globalvar.o
 KERNELDIR=/lib/modules/$(shell uname -r)/build
 PWD:=$(shell pwd)
 modules:
