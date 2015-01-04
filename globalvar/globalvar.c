@@ -55,6 +55,7 @@ static int __init globalvar_init(void)
 
     ret = alloc_chrdev_region(&devno, dev_minor, 1, "globalvar");
     dev_major = MAJOR(devno);
+    printk("dev majon num: %d\n",dev_major);
 
     if (ret < 0)
     {
