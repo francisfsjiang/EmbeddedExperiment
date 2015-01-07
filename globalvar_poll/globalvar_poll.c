@@ -156,7 +156,7 @@ ssize_t globalvar_write(struct file *filp, const char __user* buf, size_t len, l
 		return -EFAULT;
 	}
 	dev->read_able = 1;
-	wake_up(&dev->read_queue);
+	//wake_up(&dev->read_queue);
 	printk("%s\nglobalvar write called. global_var = 0x%x.\n", DEVICE_NAME,dev->global_var);
 	return sizeof(int);
 }
