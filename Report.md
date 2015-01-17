@@ -106,9 +106,80 @@ mmap将一个文件或者其它对象映射进内存，来进行内存共享。
 
 ###字符驱动实验
 
+Linux设备驱动会以内核模块的形式出现，因此，学会编写Linux内核模块编程是学习Linux设备驱动的先决条件。
+
+在内核模块驱动中，有两个比较重要的知识点，一个是对模块`init`方法和`exit`方法的指定，如下函数所示。
+
+    module_init(globalvar_init);
+    module_exit(globalvar_exit);
+
+参数为对应的函数指针。另一个就是对设备操作函数的映射。
+
+    struct file_operations globalvar_fops =
+    {
+        owner: THIS_MODULE,
+        open: globalvar_open,
+        release: globalvar_release,
+        read: globalvar_read,
+        write: globalvar_write,
+        unlocked_ioctl: globalvar_ioctl,
+    };
+
+在`read`和`write`方法中，比较重要的函数有两个
+
+    ret = copy_to_user((void*)buf, (const void*)&dev->global_var, sizeof(int));
+
+    ret = copy_from_user((void*)&dev->global_var, (const void*)buf, sizeof(int));
+
+`copy_to_user`函数将内核中的内存地址拷贝到对应的用户空间，`copy_from_user`则是相反。
 
 
 ###Poll Device
+
+`poll`是在linux系统中一种高效的I/O模型，`poll`可以一次性监听多个文件描述符，
+并且可以针对每个文件描述符指定不同的监听事件，并且`poll`可以做到非阻塞监听。
+
+    ret = poll(fds, POLL_DEV_NUM, 5000);
+
+该函数实现了对指定文件描述符集合进行poll操作，在等待5000ms内检查有没有文件描述符准备就绪，然后就返回
+准备好的文件描述符数量。
+
+poll在设备驱动中的实现是通过如下方式实现的，首先，在`file_operation`中指定自定义的poll函数
+
+    struct file_operations globalvar_fops =
+    {
+        owner: THIS_MODULE,
+        open: globalvar_open,
+        release: globalvar_release,
+        read: globalvar_read,
+        write: globalvar_write,
+        unlocked_ioctl: globalvar_ioctl,
+        poll: globalvar_poll, \\设备poll 函数实现
+    };
+
+`poll`实现如下
+
+    unsigned globalvar_poll(struct file *filp, struct poll_table_struct *poll_table)
+    {
+        struct globalvar_dev *dev = filp->private_data;
+        unsigned int mask = 0;
+
+        poll_wait(filp, &dev->read_queue, poll_table);
+        if (dev->read_able == 1)
+        {
+            mask |= POLLIN;
+        }
+        printk("%s\npoll mask 0x%x\n", DEVICE_NAME, mask);
+        return mask;
+    }
+
+在该函数中，重点是`poll_wait`函数和返回值`mask`，`poll_wait`将当前进程加入等待队列`read_queue`，
+并且检查设备状态，如果有数据则返回对应的`mask`。当在`poll`的等待过程中，如果准备就绪，则可以
+通过如下方法激活等待队列
+
+    wake_up(&dev->read_queue);
+
+激活之后，会再次检查文件描述符集合中的描述符准备状态，并返回`poll`函数结果。
 
 &#160;
 
@@ -116,4 +187,6 @@ mmap将一个文件或者其它对象映射进内存，来进行内存共享。
 
 ##实验总结及感想
 
-通过以上所述的几个实验
+通过以上所述的几个实验，我掌握了在嵌入式系统上进行IPC以及模块驱动的基本原理，
+并通过实践掌握了编写方法，增加了动手实践以及操作的能力，丰富了知识以及经验储备，
+使我获益匪浅，相信在未来的实践活动中一定能获得更多的收获。
